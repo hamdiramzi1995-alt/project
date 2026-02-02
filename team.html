@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>👥 صفحة الفريق</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#000;
+  color:#FFD700;
+}
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:20px;
+}
+.box{
+  background:#1a1400;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 0 20px #FFD70044;
+}
+h2{text-align:center;margin-top:0}
+.member{
+  padding:10px;
+  border-bottom:1px solid #FFD70033;
+  font-size:14px;
+}
+.member:last-child{border:none}
+.level{color:#00ff99;font-weight:bold}
+.balance{color:#4dd0ff}
+.empty{
+  color:#aaa;
+  text-align:center;
+  padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="box">
+    <h2>👥 الفريق الأول</h2>
+    <div id="team1"></div>
+  </div>
+
+  <div class="box">
+    <h2>👥 الفريق الثاني</h2>
+    <div id="team2"></div>
+  </div>
+
+  <div class="box">
+    <h2>👥 الفريق الثالث</h2>
+    <div id="team3"></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, collection, query, where, getDocs
+} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+/* Firebase */
+const firebaseConfig = {
+  apiKey: "AIzaSyAa6ETi1DmEI-3nVuqjpsaodT0rXsP8bIw",
+  authDomain: "aple-21978.firebaseapp.com",
+  projectId: "aple-21978",
+  storageBucket: "aple-21978.firebasestorage.app",
+  messagingSenderId: "1013598113300",
+  appId: "1:1013598113300:web:5e71138b4e75e2a2752101"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+onAuthStateChanged(auth, async user=>{
+  if(!user) return;
+
+  const meSnap = await getDoc(doc(db,"users",user.uid));
+  if(!meSnap.exists()) return;
+
+  const myCode = meSnap.data().inviteCode;
+
+  /* الفريق 1 */
+  const team1 = await getTeamByCode(myCode);
+  renderTeam(team1,"team1");
+
+  /* الفريق 2 */
+  let team2 = [];
+  for(const u of team1){
+    const sub = await getTeamByCode(u.inviteCode);
+    team2.push(...sub);
+  }
+  renderTeam(team2,"team2");
+
+  /* الفريق 3 */
+  let team3 = [];
+  for(const u of team2){
+    const sub = await getTeamByCode(u.inviteCode);
+    team3.push(...sub);
+  }
+  renderTeam(team3,"team3");
+});
+
+/* جلب فريق حسب الرمز */
+async function getTeamByCode(code){
+  const snap = await getDocs(query(
+    collection(db,"users"),
+    where("joinedBy","==",code)
+  ));
+  return snap.docs.map(d=>d.data());
+}
+
+/* عرض الفريق */
+function renderTeam(arr,id){
+  const box=document.getElementById(id);
+  box.innerHTML="";
+  if(arr.length===0){
+    box.innerHTML=`<div class="empty">لا يوجد أعضاء</div>`;
+    return;
+  }
+  arr.forEach(u=>{
+    box.innerHTML+=`
+      <div class="member">
+        👤 ${u.phone||"مستخدم"}<br>
+        ⭐ المستوى: <span class="level">${u.level||0}</span><br>
+        💰 الرصيد: <span class="balance">${u.balance||0} دج</span>
+      </div>
+    `;
+  });
+}
+</script>
+
+</body>
+</html>

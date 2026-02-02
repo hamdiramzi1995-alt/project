@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITALIACCIAI - تسجيل / إنشاء حساب</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#000;
+  color:#ffd700;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.box{
+  width:100%;
+  max-width:360px;
+  padding:25px;
+  background:rgba(0,0,0,0.9);
+  border-radius:20px;
+  border:2px solid #ffd70055;
+  box-shadow:0 0 25px #ffd70077;
+  text-align:center;
+}
+h2{margin-bottom:20px;}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:12px;
+  border:none;
+  font-size:15px;
+}
+input{
+  background:#111;
+  color:#ffd700;
+  border:1px solid #ffd70055;
+}
+button{
+  background:#ffd700;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+#error{
+  margin-top:12px;
+  color:#ff4d4d;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>🔐 ITALIACCIAI </h2>
+
+  <input id="phone" placeholder="رقم الهاتف">
+  <input id="password" type="password" placeholder="كلمة السر">
+  <input id="invite" placeholder="رمز الدعوة (اختياري)">
+
+  <button onclick="signup()">إنشاء حساب</button>
+  <button onclick="login()">تسجيل دخول</button>
+
+  <div id="error"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, query, where, getDocs } 
+from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+/* 🔥 Firebase تاعك */
+const firebaseConfig = {
+  apiKey: "AIzaSyAa6ETi1DmEI-3nVuqjpsaodT0rXsP8bIw",
+  authDomain: "aple-21978.firebaseapp.com",
+  projectId: "aple-21978",
+  storageBucket: "aple-21978.firebasestorage.app",
+  messagingSenderId: "1013598113300",
+  appId: "1:1013598113300:web:5e71138b4e75e2a2752101"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const errorEl = document.getElementById("error");
+
+/* 📱 تحويل الهاتف إلى إيميل وهمي */
+function phoneToEmail(phone){
+  return phone + "@total.fake";
+}
+
+/* 🔒 توليد Device ID */
+let deviceId = localStorage.getItem("deviceId");
+if(!deviceId){
+  deviceId = crypto.randomUUID();
+  localStorage.setItem("deviceId", deviceId);
+}
+
+/* ✅ إنشاء حساب */
+window.signup = async () => {
+  try{
+    const phone = document.getElementById("phone").value.trim();
+    const pass  = document.getElementById("password").value.trim();
+    const inviteInput = document.getElementById("invite").value.trim();
+
+    if(!phone || !pass){
+      errorEl.textContent="❌ املأ جميع الحقول";
+      return;
+    }
+
+    let joinedBy = null;
+
+    /* 🧠 تحقق من رمز الدعوة إذا دخل */
+    if(inviteInput){
+      const q = query(
+        collection(db,"users"),
+        where("inviteCode","==",inviteInput)
+      );
+      const snap = await getDocs(q);
+
+      if(snap.empty){
+        errorEl.textContent="❌ رمز الدعوة غير صحيح";
+        return;
+      }
+
+      joinedBy = inviteInput;
+    }
+
+    const email = phoneToEmail(phone);
+    const cred = await createUserWithEmailAndPassword(auth,email,pass);
+
+    await setDoc(doc(db,"users",cred.user.uid),{
+      phone,
+      joinedBy,          // null أو رمز صحيح
+      balance: 0,
+      level: 0,
+      deviceId,          // 🔒 حماية
+      createdAt: Date.now()
+    });
+
+    location.href="index.html";
+
+  }catch(e){
+    errorEl.textContent="❌ "+e.message;
+  }
+};
+
+/* 🔑 تسجيل دخول */
+window.login = async () => {
+  try{
+    const phone = document.getElementById("phone").value.trim();
+    const pass  = document.getElementById("password").value.trim();
+
+    if(!phone || !pass){
+      errorEl.textContent="❌ املأ جميع الحقول";
+      return;
+    }
+
+    const email = phoneToEmail(phone);
+    await signInWithEmailAndPassword(auth,email,pass);
+    location.href="index.html";
+
+  }catch(e){
+    errorEl.textContent="❌ "+e.message;
+  }
+};
+</script>
+
+</body>
+</html>

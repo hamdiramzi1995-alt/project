@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الاستثمار | منصتي</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Tahoma;
+  background:#0a1f44;
+  color:#e0f2ff;
+}
+.top{
+  padding:15px 20px;
+  background:#081a36;
+  display:flex;
+  justify-content:space-between;
+}
+.boxes{
+  padding:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:15px;
+}
+.box{
+  background:#102a5c;
+  padding:18px;
+  border-radius:14px;
+  text-align:center;
+  border:1px solid #1e90ff55;
+}
+.box h3{margin:5px 0}
+.box button{
+  margin-top:10px;
+  padding:8px 16px;
+  border:none;
+  border-radius:10px;
+  background:#1e90ff;
+  color:#fff;
+  cursor:pointer;
+}
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+.modalBox{
+  background:#081a36;
+  padding:20px;
+  border-radius:14px;
+  width:300px;
+  text-align:center;
+}
+.modalBox button{
+  margin:8px;
+  padding:6px 14px;
+  border:none;
+  border-radius:8px;
+}
+.yes{background:#00ffaa}
+.no{background:#ff5555;color:#fff}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+  <div>منصتي</div>
+  <div>
+    <div id="bal">الرصيد: 0 دج</div>
+    <div id="lvl">المستوى: 0</div>
+  </div>
+</div>
+
+<h3 style="text-align:center;margin:15px">خطط الاستثمار</h3>
+
+<div class="boxes" id="plans"></div>
+
+<div class="modal" id="modal">
+  <div class="modalBox">
+    <h4 id="mTitle"></h4>
+    <p id="mInfo"></p>
+    <p>المدة: 6 أشهر</p>
+    <button class="yes" id="confirm">تأكيد</button>
+    <button class="no" onclick="closeModal()">إلغاء</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAa6ETi1DmEI-3nVuqjpsaodT0rXsP8bIw",
+  authDomain: "aple-21978.firebaseapp.com",
+  projectId: "aple-21978",
+  storageBucket: "aple-21978.firebasestorage.app",
+  messagingSenderId: "1013598113300",
+  appId: "1:1013598113300:web:5e71138b4e75e2a2752101"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const plans = [
+ {lv:1, price:2500, profit:100},
+ {lv:2, price:5000, profit:230},
+ {lv:3, price:10000, profit:480},
+ {lv:4, price:15000, profit:800},
+ {lv:5, price:23000, profit:1200},
+ {lv:6, price:35000, profit:1900},
+ {lv:7, price:46000, profit:2500}
+];
+
+let userData, userRef, selectedPlan;
+
+onAuthStateChanged(auth, async(u)=>{
+  if(!u){ location.href="login.html"; return; }
+  userRef = doc(db,"users",u.uid);
+  const snap = await getDoc(userRef);
+  userData = snap.data();
+
+  document.getElementById("bal").textContent="الرصيد: "+userData.balance+" دج";
+  document.getElementById("lvl").textContent="المستوى: "+userData.level;
+
+  render();
+});
+
+function render(){
+  const c=document.getElementById("plans");
+  c.innerHTML="";
+  plans.forEach(p=>{
+    const d=document.createElement("div");
+    d.className="box";
+    d.innerHTML=`
+      <h3>المستوى ${p.lv}</h3>
+      <p>المبلغ: ${p.price} دج</p>
+      <p>الربح: ${p.profit} دج</p>
+      <button>استثمر</button>
+    `;
+    d.querySelector("button").onclick=()=>openModal(p);
+    c.appendChild(d);
+  });
+}
+
+function openModal(p){
+  selectedPlan=p;
+  document.getElementById("mTitle").textContent="المستوى "+p.lv;
+  document.getElementById("mInfo").textContent=`استثمار ${p.price} دج | ربح ${p.profit} دج`;
+  document.getElementById("modal").style.display="flex";
+}
+
+window.closeModal=()=>document.getElementById("modal").style.display="none";
+
+document.getElementById("confirm").onclick=async()=>{
+  if(userData.balance < selectedPlan.price){
+    alert("❌ رصيد غير كافي");
+    return;
+  }
+  userData.balance -= selectedPlan.price;
+  userData.level = selectedPlan.lv;
+
+  await updateDoc(userRef,{
+    balance:userData.balance,
+    level:userData.level
+  });
+
+  alert("✅ تم الاستثمار بنجاح");
+  location.reload();
+};
+</script>
+
+</body>
+</html>

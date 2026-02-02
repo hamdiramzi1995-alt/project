@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>🎰 Wheel Code</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:radial-gradient(circle,#12001f,#000);
+  font-family:Arial;
+  color:#fff;
+  overflow:hidden;
+}
+
+/* رصيد صغير */
+#balanceTop{
+  position:fixed;
+  top:8px;
+  right:8px;
+  background:#000;
+  padding:4px 10px;
+  border-radius:12px;
+  color:#ffd700;
+  font-size:12px;
+  box-shadow:0 0 6px gold;
+  z-index:9999;
+}
+
+/* الماكينة */
+.machine{
+  position:relative;
+  width:300px;
+  text-align:center;
+}
+
+/* السهم 3D للأسفل */
+.pointer{
+  position:absolute;
+  top:-22px;
+  left:50%;
+  transform:translateX(-50%) rotate(180deg);
+  width:0;height:0;
+  border-left:20px solid transparent;
+  border-right:20px solid transparent;
+  border-bottom:34px solid #ffd700;
+  filter:
+    drop-shadow(0 4px 2px rgba(0,0,0,.6))
+    drop-shadow(0 0 10px gold);
+  z-index:20;
+}
+.pointer::before{
+  content:"";
+  position:absolute;
+  left:-18px;
+  top:-32px;
+  border-left:18px solid transparent;
+  border-right:18px solid transparent;
+  border-bottom:28px solid rgba(255,255,255,.35);
+}
+
+/* الإطار */
+.rim{
+  width:260px;
+  height:260px;
+  padding:12px;
+  border-radius:50%;
+  background:linear-gradient(145deg,#7a4a00,#2a1500);
+  margin:auto;
+  box-shadow:0 15px 30px #000;
+  position:relative;
+}
+
+/* اللمبات */
+.bulbs{
+  position:absolute;
+  inset:-6px;
+  animation:spinLights 6s linear infinite;
+}
+
+.bulbs span{
+  position:absolute;
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  opacity:0;
+  animation:runLight 1.6s linear infinite;
+}
+
+/* ألوان مختلفة */
+.bulbs span:nth-child(4n+1){ background:#2196f3; box-shadow:0 0 14px #2196f3; }
+.bulbs span:nth-child(4n+2){ background:#ffffff; box-shadow:0 0 14px #ffffff; }
+.bulbs span:nth-child(4n+3){ background:#e53935; box-shadow:0 0 14px #e53935; }
+.bulbs span:nth-child(4n){   background:#43a047; box-shadow:0 0 14px #43a047; }
+
+/* كل لمبة تشعل وحدها */
+.bulbs span:nth-child(1){animation-delay:0s}
+.bulbs span:nth-child(2){animation-delay:.08s}
+.bulbs span:nth-child(3){animation-delay:.16s}
+.bulbs span:nth-child(4){animation-delay:.24s}
+.bulbs span:nth-child(5){animation-delay:.32s}
+.bulbs span:nth-child(6){animation-delay:.40s}
+.bulbs span:nth-child(7){animation-delay:.48s}
+.bulbs span:nth-child(8){animation-delay:.56s}
+.bulbs span:nth-child(9){animation-delay:.64s}
+.bulbs span:nth-child(10){animation-delay:.72s}
+.bulbs span:nth-child(11){animation-delay:.80s}
+.bulbs span:nth-child(12){animation-delay:.88s}
+.bulbs span:nth-child(13){animation-delay:.96s}
+.bulbs span:nth-child(14){animation-delay:1.04s}
+.bulbs span:nth-child(15){animation-delay:1.12s}
+.bulbs span:nth-child(16){animation-delay:1.20s}
+.bulbs span:nth-child(17){animation-delay:1.28s}
+.bulbs span:nth-child(18){animation-delay:1.36s}
+
+/* تشعل ↔ تطفى (واحد فقط) */
+@keyframes runLight{
+  0%{opacity:1}
+  20%{opacity:1}
+  40%{opacity:0}
+  100%{opacity:0}
+}
+.bulbs span{
+  position:absolute;
+  width:12px;
+  height:12px;
+  background:#ffd700;
+  border-radius:50%;
+  box-shadow:0 0 10px gold;
+  animation:blink 1s infinite alternate;
+}
+@keyframes blink{from{opacity:.3}to{opacity:1}}
+@keyframes spinLights{to{transform:rotate(360deg)}}
+
+/* العجلة */
+.wheel{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  position:relative;
+  background:conic-gradient(
+    #7a002a 0deg 45deg,
+    #004d66 45deg 90deg,
+    #8a7a00 90deg 135deg,
+    #3a1a8a 135deg 180deg,
+    #7a3d00 180deg 225deg,
+    #004d2a 225deg 270deg,
+    #7a002a 270deg 315deg,
+    #004d66 315deg 360deg
+  );
+  transition:transform 4s cubic-bezier(.15,.8,.15,1);
+  box-shadow:inset 0 0 25px rgba(0,0,0,.8);
+}
+
+/* الأرقام */
+.label{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:rotate(var(--a));
+  transform-origin:0 0;
+}
+.label span{
+  position:absolute;
+  transform:translateX(85px);
+  font-size:14px;
+  font-weight:bold;
+}
+
+/* المركز */
+.center{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:55px;
+  height:55px;
+  border-radius:50%;
+  background:#eee;
+  box-shadow:0 6px 12px #000;
+}
+
+/* زر */
+button{
+  width:200px;
+  height:48px;
+  margin-top:10px;
+  border:none;
+  border-radius:25px;
+  background:#00ffd5;
+  font-size:16px;
+  cursor:pointer;
+}
+
+/* الرمز */
+.code-box{
+  margin-top:8px;
+}
+.code-box input{
+  width:180px;
+  height:36px;
+  border-radius:18px;
+  border:none;
+  text-align:center;
+}
+#codeMsg{font-size:13px;margin-top:4px}
+
+/* النتيجة */
+.result{
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,.1);
+  opacity:0;
+  pointer-events:none;
+  transition:.3s;
+}
+.result.show{opacity:1;pointer-events:auto}
+.panel{
+  background:#111;
+  padding:30px 45px;
+  border-radius:18px;
+  box-shadow:0 0 25px gold;
+  font-size:22px;
+  color:#ffd700;
+}
+</style>
+</head>
+
+<body>
+
+<div id="balanceTop">💰 <span id="balance">0</span> دج</div>
+
+<div class="machine">
+  <div class="pointer"></div>
+
+  <div class="rim">
+    <div class="bulbs">
+      <script>
+        for(let i=0;i<18;i++){
+          document.write(`<span style="top:${50-46*Math.cos(i*20*Math.PI/180)}%;left:${50+46*Math.sin(i*20*Math.PI/180)}%"></span>`);
+        }
+      </script>
+    </div>
+
+    <div class="wheel" id="wheel">
+      <div class="label" style="--a:22.5deg"><span>خسرت</span></div>
+      <div class="label" style="--a:67.5deg"><span>100</span></div>
+      <div class="label" style="--a:112.5deg"><span>150</span></div>
+      <div class="label" style="--a:157.5deg"><span>250</span></div>
+      <div class="label" style="--a:202.5deg"><span>خسرت</span></div>
+      <div class="label" style="--a:247.5deg"><span>500</span></div>
+      <div class="label" style="--a:292.5deg"><span>650</span></div>
+      <div class="label" style="--a:337.5deg"><span>700</span></div>
+      <div class="center"></div>
+    </div>
+  </div>
+
+  <button onclick="spin()">🎯 لف العجلة</button>
+
+  <div class="code-box">
+    <input id="codeInput" placeholder="🎫 رمز العجلة">
+    <button onclick="checkCode()">✔ تأكيد</button>
+    <div id="codeMsg"></div>
+  </div>
+</div>
+
+<div class="result" id="resultBox">
+  <div class="panel">🎯 النتيجة: <span id="resultText"></span></div>
+</div>
+
+<script>
+let angle=0,canSpin=false;
+const prizes=[0,100,150,250,0,500,650,700];
+
+function spin(){
+  if(!canSpin){alert("أدخل رمز صحيح");return;}
+  canSpin=false;
+  angle+=1440+Math.random()*360;
+  wheel.style.transform=`rotate(${angle}deg)`;
+  setTimeout(showResult,4100);
+}
+
+async function showResult(){
+  const slice=360/prizes.length;
+  const i=Math.floor(((360-(angle%360)+270)%360)/slice);
+  const win=prizes[i];
+  resultText.innerText=win?win+" دج":"خسرت ❌";
+  resultBox.classList.add("show");
+  if(win>0 && window.userRef){
+    realBalance+=win;
+    await updateDoc(userRef,{balance:realBalance});
+    balance.innerText=realBalance;
+  }
+  setTimeout(()=>resultBox.classList.remove("show"),3000);
+}
+</script>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,updateDoc,increment} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+const app=initializeApp({
+  apiKey:"AIzaSyAa6ETi1DmEI-3nVuqjpsaodT0rXsP8bIw",
+  authDomain:"aple-21978.firebaseapp.com",
+  projectId:"aple-21978"
+});
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+window.userRef=null;
+window.realBalance=0;
+
+onAuthStateChanged(auth,async u=>{
+  if(!u)return;
+  userRef=doc(db,"users",u.uid);
+  const s=await getDoc(userRef);
+  if(s.exists()) realBalance=s.data().balance||0;
+  else await setDoc(userRef,{balance:0,usedCodes:{}});
+  balance.innerText=realBalance;
+});
+
+window.checkCode=async ()=>{
+  const code=codeInput.value.trim();
+  if(!code){codeMsg.innerText="❌ أدخل رمز";return;}
+  const codeRef=doc(db,"codes",code);
+  const c=await getDoc(codeRef);
+  if(!c.exists()){codeMsg.innerText="❌ رمز خطأ";return;}
+  const u=await getDoc(userRef);
+  if(u.data().usedCodes?.[code]){
+    codeMsg.innerText="⚠️ مستعمل";
+    return;
+  }
+  if((c.data().used||0)>=c.data().max){
+    codeMsg.innerText="⛔ منتهي";
+    return;
+  }
+  await updateDoc(codeRef,{used:increment(1)});
+  await updateDoc(userRef,{[`usedCodes.${code}`]:true});
+  codeMsg.innerText="✅ رمز صحيح";
+  canSpin=true;
+};
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+<style>
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+.bg{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+}
+.bg iframe{
+  width:100%;
+  height:100%;
+  border:0;
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <iframe
+    src="https://www.youtube.com/embed/POpi_RZdVtQ?autoplay=1&mute=1&loop=1&playlist=POpi_RZdVtQ&controls=0&playsinline=1"
+    allow="autoplay">
+  </iframe>
+</div>
+
+</body>
+</html>

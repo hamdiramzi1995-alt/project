@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>ITALIACCIAI - صفحة الإيداع</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  background:#000;
+  font-family:Tahoma,Arial;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#fff;
+}
+.card{
+  width:360px;
+  background:#050505;
+  border-radius:25px;
+  padding:20px;
+  box-shadow:0 0 30px rgba(0,255,0,.35);
+  border:2px solid #0f0;
+  text-align:center;
+}
+.logo{
+  font-size:26px;
+  font-weight:bold;
+  color:#0f0;
+  margin-bottom:10px;
+}
+.banner{
+  background:linear-gradient(90deg,#0f0,#000,#0f0);
+  color:#000;
+  padding:12px;
+  border-radius:15px;
+  font-weight:bold;
+  animation:flash 1s infinite alternate;
+}
+@keyframes flash{
+  from{box-shadow:0 0 10px #0f0}
+  to{box-shadow:0 0 30px #0f0}
+}
+.ccp-box{
+  margin-top:15px;
+  background:#111;
+  padding:12px;
+  border-radius:15px;
+  text-align:right;
+}
+.ccp-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.ccp-number{
+  color:#0f0;
+  font-weight:bold;
+}
+.copy-btn{
+  background:#0f0;
+  border:none;
+  border-radius:10px;
+  padding:6px 10px;
+  font-size:12px;
+  cursor:pointer;
+}
+input,button{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  font-size:14px;
+}
+input{background:#111;color:#fff}
+button{
+  background:#0f0;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+.history{
+  margin-top:12px;
+  background:#000;
+  padding:10px;
+  border-radius:15px;
+  max-height:160px;
+  overflow:auto;
+  font-size:13px;
+  text-align:right;
+}
+hr{border:0;border-top:1px solid #0f03}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="logo">ITALIACCIAI</div>
+
+  <div class="banner">💥 الإيداع عن طريق بريدي موب ✅ 💥</div>
+
+  <div class="ccp-box">
+    💳 رقم CCP الرسمي:
+    <div class="ccp-row">
+      <div class="ccp-number" id="officialCCP">
+        00799999002084015427
+      </div>
+      <button class="copy-btn" onclick="copyCCP()">نسخ</button>
+    </div>
+  </div>
+
+  <input id="amount" type="number" placeholder="💰 مبلغ الإيداع">
+  <input id="phone" type="text" placeholder="📱 رقم الهاتف">
+  <input id="userCCP" type="text" placeholder="🏦 رقم حسابك CCP">
+
+  <button id="send">📥 تسجيل الإيداع</button>
+
+  <div class="history" id="history">تحميل الإيداعات...</div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc,
+  query, where, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAa6ETi1DmEI-3nVuqjpsaodT0rXsP8bIw",
+  authDomain: "aple-21978.firebaseapp.com",
+  projectId: "aple-21978",
+  messagingSenderId: "1013598113300",
+  appId: "1:1013598113300:web:5e71138b4e75e2a2752101"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let uid = null;
+const historyBox = document.getElementById("history");
+
+signInAnonymously(auth);
+
+onAuthStateChanged(auth, user=>{
+  if(user){
+    uid = user.uid;
+    loadHistory();
+  }
+});
+
+/* نسخ CCP */
+window.copyCCP = ()=>{
+  navigator.clipboard.writeText(
+    document.getElementById("officialCCP").innerText
+  );
+  alert("✅ تم نسخ رقم CCP");
+};
+
+/* تسجيل الإيداع */
+document.getElementById("send").onclick = async ()=>{
+  if(!amount.value || !phone.value || !userCCP.value){
+    alert("❌ اكمل جميع البيانات");
+    return;
+  }
+
+  await addDoc(collection(db,"deposits"),{
+    uid,
+    amount: Number(amount.value),
+    phone: phone.value,
+    userCCP: userCCP.value,
+    status: "قيد المراجعة",
+    createdAt: serverTimestamp()
+  });
+
+  amount.value = phone.value = userCCP.value = "";
+};
+
+/* عرض سجل المستخدم */
+function loadHistory(){
+  const q = query(
+    collection(db,"deposits"),
+    where("uid","==",uid)
+  );
+
+  onSnapshot(q, snap=>{
+    let html="";
+    snap.forEach(d=>{
+      const x = d.data();
+      if(x.createdAt){
+        html += `
+          💰 ${x.amount} دج<br>
+          📱 ${x.phone}<br>
+          🏦 ${x.userCCP}<br>
+          ⏳ ${x.status}<br>
+          📅 ${x.createdAt.toDate().toLocaleString("ar-DZ")}
+          <hr>
+        `;
+      }
+    });
+    historyBox.innerHTML = html || "لا توجد إيداعات";
+  });
+}
+</script>
+
+</body>
+</html>
